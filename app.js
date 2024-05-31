@@ -37,7 +37,7 @@ const authenticateToken = (request, response, next) => {
         "MY_SECRET_TOKEN",
         async (error, payload) => {
           if (error) {
-            response.status(400);
+            response.status(401);
             response.send("Invalid JWT Token");
           } else {
             next();
@@ -45,12 +45,12 @@ const authenticateToken = (request, response, next) => {
         }
       );
     } else {
-      response.status(400);
+      response.status(401);
       response.send("Invalid JWT Token");
     }
   } else {
-    response.status(400);
-    response.send("No Token");
+    response.status(401);
+    response.send("Invalid JWT Token");
   }
 };
 
@@ -120,12 +120,12 @@ app.get(
   "/districts/:districtId",
   authenticateToken,
   async (request, response) => {
-    const { districtId = "" } = request.params;
+    const { districtId } = request.params;
     const selectQuery = `select * from district where district_id=${districtId};`;
     const res = await db.get(selectQuery);
     const res1 = {
       districtId: res.district_id,
-      stateName: res.district_name,
+      districtName: res.district_name,
       stateId: res.state_id,
       cases: res.cases,
       cured: res.cured,
@@ -188,8 +188,8 @@ app.get(
     sum(cured) as totalCured,
     sum(active) as totalActive,
     sum(deaths) as totalDeaths from state inner join district
-    on district.state_id=state.state_id;`;
-    const res = await db.all(query);
+    on district.state_id=state.state_id where state.state_id=${stateId};`;
+    const res = await db.get(query);
     response.send(res);
   }
 );
